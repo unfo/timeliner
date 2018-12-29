@@ -23,7 +23,7 @@
     <script src="js/raphael.min.js"></script>
     <script src="js/moment.js"></script>
     <script src="js/utilities.js"></script>
-    <script src="data/events.js"></script>
+    <script src="data/app-events.js"></script>
     <script>
         class DataEvent {
             constructor(event_id, event_timestamp, event_status) {
@@ -47,17 +47,27 @@
         })(data);
     </script>
     <script>
+        let event_moments = dataEvents.map(ev => { return ev.timestamp; });
+        event_moments.sort((left, right) => { return left.diff(right); });
+        let original_start_date = event_moments[0] 
+        let start_date = moment(original_start_date);
+        let end_date = event_moments.reverse()[0];
+        let total_days = Math.abs(end_date.diff(start_date, 'days') + 1); // +1 because the dates cut off the 24h of the last date
+        let event_date_counts = new Map();
+        for (var i = 0; i < total_days; i++) {
+            let date_key = start_date.format("YYYY-MM-DD")
+            event_date_counts[date_key] = 0;
+            start_date.add(1, 'days')
+        }
         let event_dates = dataEvents.map(ev => { return ev.timestamp.format("YYYY-MM-DD"); });
-        let event_date_counts = event_dates.reduce((acc, item) => { 
-            if (item in acc) { 
-                acc[item] += 1 
-            } else { 
-                acc[item] = 1 
-            } 
-            return acc; 
-        }, []);
+        event_dates.forEach(event_date => { 
+            event_date_counts[event_date] += 1
+        });
+
         let unique_dates = Object.keys(event_date_counts).length
         console.log("There are a total of ", unique_dates, "dates in the array");
+        
+        console.log(`Starting from ${start_date} and ending in ${end_date} which is ${total_days} days`);
         // Object.keys(event_date_counts).sort().forEach(edc => {
         //     console.log(edc, " => ", event_date_counts[edc] );
         // });
@@ -81,7 +91,7 @@
         if (can_fit) {
             console.log("we can fit all items easily (", gap_groups[gap_size] ,") with gap", gap_size);
         } else {
-            console.log("need to make it tighter ", unique_dates, ">", graph_easy_fit_x);
+            console.log("need to make it tighter ", unique_dates, ">", gap_groups[gap_size]);
             unique_dates = Object.keys(fitting_data).length;
             gap_size = findMaxGapForGroups(gap_groups, unique_dates, graph_min_gap, graph_max_gap);
             can_fit = gap_size >= graph_min_gap;
@@ -95,10 +105,23 @@
                 let m_x = graph_base_x + (idx * gap_size);
                 let m_y = graph_base_y;
                 let l_x = m_x;
-                let l_y = graph_base_y - normalized_data[edc];
-                paper.path(`M${m_x} ${m_y}L${l_x} ${l_y}`);
+                if (normalized_data[edc] > 0) {
+                    var l_y = graph_base_y - normalized_data[edc];
+                    var color = "black";
+                } else {
+                    var l_y = graph_base_y - 2;
+                    var color = "red";
+                }
+                paper.path(`M${m_x} ${m_y}L${l_x} ${l_y}`).attr({ stroke: color });
             });
+
+            
         }
+
+        var start_txt = paper.text(graph_base_x - 25, graph_base_y + 25, original_start_date.format("YYYY-MM-DD"));
+        start_txt.rotate(315);
+        var end_txt = paper.text(graph_base_x + ((unique_dates - 1) * gap_size) - 25, graph_base_y + 25, end_date.format("YYYY-MM-DD"));
+        end_txt.rotate(315);
 
     </script>
 </body>

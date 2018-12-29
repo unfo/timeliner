@@ -8,7 +8,7 @@ function normalizeValues(key_values, max_val = 100, min_val = 0) {
     let normalizedValues = new Map();
     Object.keys(key_values).forEach(key => {
         let val = key_values[key];
-        let new_val = max_val - (ratio * val);
+        let new_val = (ratio * val);
         normalizedValues[key] = new_val;
     });
     return normalizedValues;
@@ -39,9 +39,9 @@ function groupDates(key_values, maxGroups) {
 function findMaxGapForGroups(gap_counts, count, min, max) {
     let max_gap_found = max;
     for (max_gap_found = max; max_gap_found >= min; max_gap_found--) {
-        console.log(`${max_gap_found} can fit ${gap_counts[max_gap_found]}`);
+        // console.log(`${max_gap_found} can fit ${gap_counts[max_gap_found]}`);
         if (gap_counts[max_gap_found] >= count) {
-            console.log("BREAK!")
+            // console.log("BREAK!")
             break;
         } 
     }
