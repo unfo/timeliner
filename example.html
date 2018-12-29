@@ -22,7 +22,8 @@
 
     <script src="js/raphael.min.js"></script>
     <script src="js/moment.js"></script>
-    <script src="data/app-events.js"></script>
+    <script src="js/utilities.js"></script>
+    <script src="data/events.js"></script>
     <script>
         class DataEvent {
             constructor(event_id, event_timestamp, event_status) {
@@ -64,58 +65,26 @@
         paper.rect(0, 0, 800, 600);
 
         var graph_base_y = 500;
-        var graph_base_x = 100;
+        var graph_base_x = 75;
         var graph_max_height = 100;
-        var graph_gap_normal_x = 10;
-        var graph_max_width = 800 - 100 - 100;
-        var graph_easy_fit_x = Math.floor(graph_max_width / graph_gap_normal_x);
-        var can_fit = (unique_dates < graph_easy_fit_x);
-        var fitting_data = groupDates(event_date_counts, graph_easy_fit_x);
-        
-        var maxFinder = (lord, usurper) => { return (usurper > lord ? usurper : lord); }
-
-        
-        function normalizeValues(key_values, max_val = 100, min_val = 0) {
-            let current_max = Object.values(key_values).reduce(maxFinder);
-            let current_min = Object.values(key_values).map(v => { return (-1 * v); }).reduce(maxFinder);
-            let ratio = (max_val - min_val) / (current_max - current_min);
-            let normalizedValues = new Map();
-            Object.keys(key_values).forEach(key => {
-                let val = key_values[key];
-                let new_val = max_val - (ratio * val);
-                normalizedValues[key] = new_val;
-            });
-            return normalizedValues;
-
+        var graph_max_gap = 100;
+        var graph_min_gap = 3;
+        var graph_max_width = 800 - 75 - 50;
+        var gap_groups = new Map();
+        for (var gap = graph_max_gap; gap >= graph_min_gap; gap--) {
+            gap_groups[gap] = Math.floor(graph_max_width / gap);
         }
-
-        function groupDates(key_values, maxGroups) {
-            let group_count = Object.keys(key_values).length;
-            if (group_count <= maxGroups) {
-                return key_values;
-            }
-
-            let group_size = Math.ceil(group_count / maxGroups);
-            var group_number = 0;
-            var grouped = new Map();
-            Object.keys(key_values).sort().forEach((key, index) => {
-                let group_changed = false;
-                if (index % group_size == 0) {
-                    group_number += 1;
-                    group_changed = true;
-                }
-                let group_name = ("" + group_number + "-grp").padStart(8, "0");
-                grouped[group_name] = (group_changed ? 0 : grouped[group_name]) + key_values[key]
-            });
-            return grouped;
-        }
-
+        var gap_size = findMaxGapForGroups(gap_groups, unique_dates, graph_min_gap, graph_max_gap);
+        var can_fit = gap_size >= graph_min_gap;
+        var fitting_data = groupDates(event_date_counts, gap_groups[graph_min_gap]);
+        
         if (can_fit) {
-            console.log("we can fit all items easily");
+            console.log("we can fit all items easily (", gap_groups[gap_size] ,") with gap", gap_size);
         } else {
             console.log("need to make it tighter ", unique_dates, ">", graph_easy_fit_x);
             unique_dates = Object.keys(fitting_data).length;
-            can_fit = (unique_dates < graph_easy_fit_x);
+            gap_size = findMaxGapForGroups(gap_groups, unique_dates, graph_min_gap, graph_max_gap);
+            can_fit = gap_size >= graph_min_gap;
             console.log("After grouping: ", unique_dates);
         }
         
@@ -123,7 +92,7 @@
 
         if (can_fit) {
             Object.keys(normalized_data).sort().forEach((edc, idx) => {
-                let m_x = graph_base_x + (idx * graph_gap_normal_x);
+                let m_x = graph_base_x + (idx * gap_size);
                 let m_y = graph_base_y;
                 let l_x = m_x;
                 let l_y = graph_base_y - normalized_data[edc];
