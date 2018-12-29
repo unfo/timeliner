@@ -61,23 +61,45 @@
             console.log(edc, " => ", event_date_counts[edc] );
         });
         var paper = Raphael(10, 50, 800, 600);
+        paper.rect(0, 0, 800, 600);
+
         var graph_base_y = 500;
         var graph_base_x = 100;
         var graph_max_height = 100;
         var graph_gap_normal_x = 10;
         var graph_max_width = 800 - 100 - 100;
         var graph_easy_fit_x = Math.floor(graph_max_width / graph_gap_normal_x);
+
         if (unique_dates < graph_easy_fit_x) {
             console.log("we can fit all items easily");
         } else {
             console.log("need to make it tighter");
         }
-        Object.keys(event_date_counts).sort().forEach((edc, idx) => {
-            
+
+        var maxFinder = (lord, usurper) => { return (usurper > lord ? usurper : lord); }
+        
+        function normalizeValues(key_values, max_val = 100, min_val = 0) {
+            let current_max = Object.values(key_values).reduce(maxFinder);
+            let current_min = Object.values(key_values).map(v => { return (-1 * v); }).reduce(maxFinder);
+            let ratio = (max_val - min_val) / (current_max - current_min);
+            let normalizedValues = new Map();
+            Object.keys(key_values).forEach(key => {
+                let val = key_values[key];
+                let new_val = max_val - (ratio * val);
+                normalizedValues[key] = new_val;
+            });
+            return normalizedValues;
+
+        }
+
+        let normalized_data = normalizeValues(event_date_counts, graph_max_height);
+        Object.keys(normalized_data).sort().forEach((edc, idx) => {
+            let m_x = graph_base_x + (idx * graph_gap_normal_x);
+            let m_y = graph_base_y;
+            let l_x = m_x;
+            let l_y = graph_base_y - normalized_data[edc];
+            paper.path(`M${m_x} ${m_y}L${l_x} ${l_y}`);
         });
-        paper.rect(0, 0, 800, 600);
-        paper.path("M500 500L500 450");
-        paper.path("M520 500L520 470");
 
     </script>
 </body>
