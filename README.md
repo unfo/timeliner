@@ -2,6 +2,15 @@
 
 Using Raphael, Moment and custom js to keep myself fresh with coding.
 
+*Example showing 15 days' worth of data*
+
+!examples/15d-data.jpg!
+
+*Example showing 180 days' worth of data*
+
+!examples/180d-data.jpg!
+
+
 ## Current features
 
 * Read in an array of data and graph it on bottom quarter of canvas
