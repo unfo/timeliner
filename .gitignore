@@ -3,3 +3,5 @@ data/security-events.csv
 examples/Mills_Timeline.svg
 examples/Timeline.svg
 examples/Timeline2.svg
+data/app-events.csv
+data/app-events.js

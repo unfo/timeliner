@@ -22,7 +22,7 @@
 
     <script src="js/raphael.min.js"></script>
     <script src="js/moment.js"></script>
-    <script src="data/events.js"></script>
+    <script src="data/app-events.js"></script>
     <script>
         class DataEvent {
             constructor(event_id, event_timestamp, event_status) {
@@ -57,9 +57,9 @@
         }, []);
         let unique_dates = Object.keys(event_date_counts).length
         console.log("There are a total of ", unique_dates, "dates in the array");
-        Object.keys(event_date_counts).sort().forEach(edc => {
-            console.log(edc, " => ", event_date_counts[edc] );
-        });
+        // Object.keys(event_date_counts).sort().forEach(edc => {
+        //     console.log(edc, " => ", event_date_counts[edc] );
+        // });
         var paper = Raphael(10, 50, 800, 600);
         paper.rect(0, 0, 800, 600);
 
@@ -69,14 +69,11 @@
         var graph_gap_normal_x = 10;
         var graph_max_width = 800 - 100 - 100;
         var graph_easy_fit_x = Math.floor(graph_max_width / graph_gap_normal_x);
-
-        if (unique_dates < graph_easy_fit_x) {
-            console.log("we can fit all items easily");
-        } else {
-            console.log("need to make it tighter");
-        }
-
+        var can_fit = (unique_dates < graph_easy_fit_x);
+        var fitting_data = groupDates(event_date_counts, graph_easy_fit_x);
+        
         var maxFinder = (lord, usurper) => { return (usurper > lord ? usurper : lord); }
+
         
         function normalizeValues(key_values, max_val = 100, min_val = 0) {
             let current_max = Object.values(key_values).reduce(maxFinder);
@@ -92,14 +89,47 @@
 
         }
 
-        let normalized_data = normalizeValues(event_date_counts, graph_max_height);
-        Object.keys(normalized_data).sort().forEach((edc, idx) => {
-            let m_x = graph_base_x + (idx * graph_gap_normal_x);
-            let m_y = graph_base_y;
-            let l_x = m_x;
-            let l_y = graph_base_y - normalized_data[edc];
-            paper.path(`M${m_x} ${m_y}L${l_x} ${l_y}`);
-        });
+        function groupDates(key_values, maxGroups) {
+            let group_count = Object.keys(key_values).length;
+            if (group_count <= maxGroups) {
+                return key_values;
+            }
+
+            let group_size = Math.ceil(group_count / maxGroups);
+            var group_number = 0;
+            var grouped = new Map();
+            Object.keys(key_values).sort().forEach((key, index) => {
+                let group_changed = false;
+                if (index % group_size == 0) {
+                    group_number += 1;
+                    group_changed = true;
+                }
+                let group_name = ("" + group_number + "-grp").padStart(8, "0");
+                grouped[group_name] = (group_changed ? 0 : grouped[group_name]) + key_values[key]
+            });
+            return grouped;
+        }
+
+        if (can_fit) {
+            console.log("we can fit all items easily");
+        } else {
+            console.log("need to make it tighter ", unique_dates, ">", graph_easy_fit_x);
+            unique_dates = Object.keys(fitting_data).length;
+            can_fit = (unique_dates < graph_easy_fit_x);
+            console.log("After grouping: ", unique_dates);
+        }
+        
+        let normalized_data = normalizeValues(fitting_data, graph_max_height);
+
+        if (can_fit) {
+            Object.keys(normalized_data).sort().forEach((edc, idx) => {
+                let m_x = graph_base_x + (idx * graph_gap_normal_x);
+                let m_y = graph_base_y;
+                let l_x = m_x;
+                let l_y = graph_base_y - normalized_data[edc];
+                paper.path(`M${m_x} ${m_y}L${l_x} ${l_y}`);
+            });
+        }
 
     </script>
 </body>
