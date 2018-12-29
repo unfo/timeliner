@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Timeline example</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+</head>
+
+<body>
+    <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+    <script src="js/raphael.min.js"></script>
+    <script src="js/moment.js"></script>
+    <script src="data/events.js"></script>
+    <script>
+        class DataEvent {
+            constructor(event_id, event_timestamp, event_status) {
+                this.event_id = event_id;
+                this.timestamp_string = event_timestamp;
+                this.timestamp = this.parseTimestamp();
+                this.status = event_status;
+            }
+
+            parseTimestamp() {
+                var format = 'DD.MM.yyyy hh.mm.ss';
+                return moment(this.timestamp_string, format);
+
+            }
+        }
+        ((eventStrings) => {
+            window.dataEvents = eventStrings.map(line => {
+                [status, timestamp, eventid] = line.split("|");
+                return new DataEvent(eventid, timestamp, status);
+            });
+        })(data);
+    </script>
+    <script>
+        let event_dates = dataEvents.map(ev => { return ev.timestamp.format("YYYY-MM-DD"); });
+        let event_date_counts = event_dates.reduce((acc, item) => { 
+            if (item in acc) { 
+                acc[item] += 1 
+            } else { 
+                acc[item] = 1 
+            } 
+            return acc; 
+        }, []);
+        let unique_dates = Object.keys(event_date_counts).length
+        console.log("There are a total of ", unique_dates, "dates in the array");
+        Object.keys(event_date_counts).sort().forEach(edc => {
+            console.log(edc, " => ", event_date_counts[edc] );
+        });
+        var paper = Raphael(10, 50, 800, 600);
+        var graph_base_y = 500;
+        var graph_base_x = 100;
+        var graph_max_height = 100;
+        var graph_gap_normal_x = 10;
+        var graph_max_width = 800 - 100 - 100;
+        var graph_easy_fit_x = Math.floor(graph_max_width / graph_gap_normal_x);
+        if (unique_dates < graph_easy_fit_x) {
+            console.log("we can fit all items easily");
+        } else {
+            console.log("need to make it tighter");
+        }
+        Object.keys(event_date_counts).sort().forEach((edc, idx) => {
+            
+        });
+        paper.rect(0, 0, 800, 600);
+        paper.path("M500 500L500 450");
+        paper.path("M520 500L520 470");
+
+    </script>
+</body>
+
+</html>
